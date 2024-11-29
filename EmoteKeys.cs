@@ -1,19 +1,44 @@
 ﻿using MelonLoader;
 using UnityEngine;
 using HarmonyLib;
+using Mirror;
 
-[assembly: MelonInfo(typeof(Emote_HotKeys.Core), "Emote HotKeys", "1.0.0", "Lilly", null)]
+[assembly: MelonInfo(typeof(Emote_HotKeys.EmoteKeys), "Emote HotKeys", "1.0.0", "Lilly", null)]
 [assembly: MelonGame("KisSoft", "ATLYSS")]
 
 namespace Emote_HotKeys
 {
-    public class Core : MelonMod
+    public class EmoteKeys : MelonMod
     {
+        static EmoteKeys instance;
+        public Player Localplayer;
+
+        [HarmonyPatch(typeof(Player), "OnGameConditionChange")]
+        public static class playerspawn
+        {
+            private static void Postfix(ref Player __instance)
+            {
+                if (__instance._currentGameCondition == GameCondition.IN_GAME && __instance.isLocalPlayer)
+                {
+                    EmoteKeys.instance.Localplayer = __instance;
+                }
+            }
+        }
+
+        public override void OnInitializeMelon()
+        {
+            instance = this;
+        }
+
         public override void OnUpdate()
         {
             try
             {
-                if (Input.GetKeyDown(KeyCode.B))
+                if (Localplayer._inChat || Localplayer._inUI || Localplayer._bufferingStatus || HostConsole._current._isOpen)
+                {
+                    return;
+                }
+                else if (Input.GetKeyDown(KeyCode.B))
                 {
                     ChatBehaviour._current.Cmd_SendChatMessage("/dance", ChatBehaviour.ChatChannel.ZONE);
                 }
